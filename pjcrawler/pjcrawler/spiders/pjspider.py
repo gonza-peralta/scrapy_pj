@@ -8,11 +8,16 @@ import re
 import copy
 from datetime import datetime
 import urllib
+from pjcrawler.items import HojaInsumoItem
+import time
 
 session_re = re.compile("JSESSIONID=.*\d+")
 sesshash_re = re.compile("JSESSIONID=\w*~(.+)")
 popup_re = re.compile("/BJNPUBLICA/hojaInsumo2.seam\?cid=\d+")
 pag_re = re.compile(".*(\d) de (\d+)")
+standar_row = "formResultados%3AdataTable%3AX%3AlinkTituloSentencia="\
+    "formResultados%3AdataTable%3AX%3AlinkTituloSentencia&"
+
 
 class PjSpider(scrapy.Spider):
     name = 'pjspider'
@@ -44,10 +49,10 @@ class PjSpider(scrapy.Spider):
     formdata = ["AJAXREQUEST=_viewRoot",
                 "formBusqueda%3Aj_id18=true",
                 #"formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=1/1/2002",
-                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=18%2F05%2F2016",
+                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=1%2F06%2F2016",
                 
                 
-                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputCurrentDate=05%2F2016", # FECHA ACTUAL
+                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputCurrentDate=06%2F2016", # FECHA ACTUAL
                 
                 "formBusqueda%3Aj_id20%3AdecorProcedimiento%3AayudanteProc=",
                 "formBusqueda%3Aj_id20%3AdecorProcedimiento%3AsuggestAyudante_selection=",
@@ -67,8 +72,8 @@ class PjSpider(scrapy.Spider):
                 "formBusqueda%3Aj_id20%3Aj_id120%3AcajaQuery=",
                 
                 
-                "formBusqueda%3Aj_id20%3Aj_id147%3AfechaHastaCalInputDate=31%2F05%2F2016",
-                "formBusqueda%3Aj_id20%3Aj_id147%3AfechaHastaCalInputCurrentDate=05%2F2016",
+                "formBusqueda%3Aj_id20%3Aj_id147%3AfechaHastaCalInputDate=9%2F06%2F2016",
+                "formBusqueda%3Aj_id20%3Aj_id147%3AfechaHastaCalInputCurrentDate=06%2F2016",
                 
                 
                 "formBusqueda%3Aj_id20%3Aj_id160%3AayudanteResumen=",
@@ -93,21 +98,22 @@ class PjSpider(scrapy.Spider):
                 "formBusqueda%3Aj_id20%3ASearch=formBusqueda%3Aj_id20%3ASearch=",
                 "AJAX%3AEVENTS_COUNT=1&"]
     formdata_popup = ["AJAXREQUEST=_viewRoot",
-                      "formResultados%3AformResultados=",
+                      "formResultados=formResultados",
                       "autoScroll=",
-                      # "javax.faces.ViewState%3Aj_id4",
-                      "formResultados%3AdataTable%3A0%3AlinkTituloSentencia="\
-                      "formResultados%3AdataTable%3A0%3AlinkTituloSentencia",
+                      # "javax.faces.ViewState=j_id1",
+                      # "formResultados%3AdataTable%3A0%3AlinkTituloSentencia="\
+                      # "formResultados%3AdataTable%3A0%3AlinkTituloSentencia&",
                       "AJAX%3AEVENTS_COUNT=1"]
     formdata_pag = ["AJAXREQUEST=_viewRoot",
-                    "formResultados%3AformResultados=",
+                    "formResultados=formResultados",
                     "autoScroll=",
-                    #"javax.faces.ViewState%3Aj_id1",
-                    "formResultados%3AsigLink%3AformResultados%3AsigLink=",
+                    #"javax.faces.ViewState=j_id2",
+                    "formResultados%3AsigLink=formResultados%3AsigLink&",
                     "AJAX%3AEVENTS_COUNT=1"]
 
     def start_requests(self):
         for i,url in enumerate(self.start_urls):
+            # log.msg(url, level=log.INFO)
             print(url)
             headers = {"Host": "bjn.poderjudicial.gub.uy",
                        "Connection": "keep-alive",
@@ -124,8 +130,8 @@ class PjSpider(scrapy.Spider):
         This is the first page. We must extract cookie info to proceed with
         the next request
         """
-        with open('first_req.html', 'w') as f:
-            f.write(response.body)
+#         with open('first_req.html', 'w') as f:
+#             f.write(response.body)
         now = datetime.now()
         until = now.strftime("%d/%m/%Y")
         currentmonth = now.strftime("%m/%Y")
@@ -150,8 +156,9 @@ class PjSpider(scrapy.Spider):
             body = "&".join(self.formdata)
             url_request = self.principal_url + ";jsessionid=" + self.hash_session
             yield scrapy.Request(url_request, callback=self.parse_rows,
-                                 method='POST', headers=self.new_headers,
-                                 body=body)
+                                  method='POST', headers=self.new_headers,
+                                  body=body,
+                                  dont_filter=True)
         
 
     def parse_rows(self, response):
@@ -161,58 +168,71 @@ class PjSpider(scrapy.Spider):
         For each row we must need to execute a POST and then a GET to the
         popup url
         """
-        with open('second_req.html', 'w') as f:
-            f.write(response.body)
+#         with open('second_req.html', 'w') as f:
+#             f.write(response.body)
         response.selector.remove_namespaces()
         # Get tr
         tr = response.xpath("//tbody/tr[starts-with(@class, 'rich-table-row')]")
         paginate = False
         if len(tr) > 0:
             paginate = True
+        index = 0
         for sel in tr:
+            time.sleep(2)
             popup_event = sel.xpath("td[1]/@onclick").extract()
             popup_link = popup_re.findall(popup_event[0])[0]
             self.url_popup = self.urlprefix + popup_link
-            body = "&".join(self.formdata_popup)
-            # body = urllib.quote_plus(result_body)
+            popupform = copy.deepcopy(self.formdata_popup)
+            popupform.append(standar_row.replace('X', str(index)))
+            index += 1
+            body = "&".join(popupform)
+            # return scrapy.Request(self.url_postpopup, callback=self.get_popup,
             yield scrapy.Request(self.url_postpopup, callback=self.get_popup,
-                                 method='POST', headers=self.new_headers,
-                                 body=body)
+                           method='POST', headers=self.new_headers,
+                           body=body,
+                           dont_filter=True)
         if paginate:
             span_pag = response.xpath("//span[@class='negrita']/text()")[1].extract()
             current, end = pag_re.findall(span_pag)[0]
-            print "current " + current
-            print "end " + end
+            print("current " + current)
+            print("end " + end)
             if int(current) < int(end):
                 # paginate
                 url_request = self.principal_url + ";jsessionid=" + self.hash_session
                 body = "&".join(self.formdata_pag)
                 yield scrapy.Request(url_request, callback=self.parse_rows,
-                                     method='POST', headers=self.new_headers,
-                                     body=body)
+                                      method='POST', headers=self.new_headers,
+                                      body=body,
+                                      dont_filter=True)
 
     def get_popup(self, response):
         """
         After send popup post, we must proceed to send GET url to parse popup info
         """
-        yield scrapy.Request(self.url_popup, callback=self.popup_parser,
-                             method='GET', headers=self.new_headers)
+        return scrapy.Request(self.url_popup, callback=self.popup_parser,
+                              method='GET', headers=self.new_headers,
+                              dont_filter=True)
     
     def popup_parser(self, response):
         """
         Html wich have the info
         """
-        print response.body
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        item = HojaInsumoItem()
+        item['numero'] = response.xpath('//td[@id="j_id3:0:j_id13"]/text()').extract()[0]
+        item['sede'] = response.xpath('//td[@id="j_id3:0:j_id15"]/text()').extract()[0]
+        item['importancia'] = response.xpath('//td[@id="j_id3:0:j_id17"]/text()').extract()[0]
+        item['tipo'] = response.xpath('//td[@id="j_id3:0:j_id19"]/text()').extract()[0]
+        item['fecha'] = response.xpath('//td[@id="j_id21:0:j_id29"]/text()').extract()[0]
+        item['ficha'] = response.xpath('//td[@id="j_id21:0:j_id31"]/text()').extract()[0]
+        item['procedimiento'] = response.xpath('//td[@id="j_id21:0:j_id33"]/text()').extract()[0]
+#         item['redactor_nombre']
+#         item['redactor_cargo']
+#         item['resumen']
+#         item['sentencia']
+#         res = response.xpath("//table[@class='rich-table gridcell']")
+#         with open('third_req.html', 'w') as f:
+#             f.write(response.body)
+        return item
+
         
         

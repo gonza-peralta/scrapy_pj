@@ -96,15 +96,15 @@ AJAX:EVENTS_COUNT=1
         // p = re.compile("/BJNPUBLICA/hojaInsumo2.seam\?cid=\d+")
         // p.findall(s)[0]
 
-	- POST: http://bjn.poderjudicial.gub.uy/BJNPUBLICA/busquedaSelectiva.seam
+	- POST: http://bjn.poderjudicial.gub.uy/BJNPUBLICA/busquedaSelectiva.seam;jsessionid=78D718C20934B5EA43AA5EF7EC68CF3E
 	- Para lo anterior usar las cookies
 	- En el formData pasar:
-		AJAXREQUEST:_viewRoot
-		formResultados:formResultados
-		autoScroll:
-		javax.faces.ViewState:j_id4
-		formResultados:dataTable:0:linkTituloSentencia:formResultados:dataTable:0:linkTituloSentencia
-		AJAX:EVENTS_COUNT:1
+        AJAXREQUEST=_viewRoot&
+        formResultados=formResultados&
+        autoScroll=&
+        javax.faces.ViewState=j_id1&
+        formResultados%3AdataTable%3A0%3AlinkTituloSentencia=formResultados%3AdataTable%3A0%3AlinkTituloSentencia&
+        AJAX%3AEVENTS_COUNT=1&
 
 4:
 	- GET: http://bjn.poderjudicial.gub.uy/BJNPUBLICA/hojaInsumo2.seam?cid=7131 (url sacada del link del popup)
@@ -112,7 +112,7 @@ AJAX:EVENTS_COUNT=1
 	- Parsear el html y sacar la info que se precisa
 
 5:  Paginación
-    - POST: http://bjn.poderjudicial.gub.uy/BJNPUBLICA/busquedaSelectiva.seam;jsessionid=C5BFE9B7E7C3D59D4476DB9DA117DA98
+    - POST: http://bjn.poderjudicial.gub.uy/BJNPUBLICA/busquedaSelectiva.seam
     - Request Headers
         Accept:*/*
         Accept-Encoding:gzip, deflate
