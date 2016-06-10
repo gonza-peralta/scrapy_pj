@@ -9,7 +9,6 @@ import copy
 from datetime import datetime
 import urllib
 from pjcrawler.items import HojaInsumoItem
-import time
 
 session_re = re.compile("JSESSIONID=.*\d+")
 sesshash_re = re.compile("JSESSIONID=\w*~(.+)")
@@ -49,10 +48,10 @@ class PjSpider(scrapy.Spider):
     formdata = ["AJAXREQUEST=_viewRoot",
                 "formBusqueda%3Aj_id18=true",
                 #"formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=1/1/2002",
-                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=1%2F06%2F2016",
+                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=27%2F05%2F2016",
                 
                 
-                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputCurrentDate=06%2F2016", # FECHA ACTUAL
+                "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputCurrentDate=05%2F2016", # FECHA ACTUAL
                 
                 "formBusqueda%3Aj_id20%3AdecorProcedimiento%3AayudanteProc=",
                 "formBusqueda%3Aj_id20%3AdecorProcedimiento%3AsuggestAyudante_selection=",
@@ -177,8 +176,8 @@ class PjSpider(scrapy.Spider):
         if len(tr) > 0:
             paginate = True
         index = 0
+        priority = 2*len(tr)
         for sel in tr:
-            time.sleep(2)
             popup_event = sel.xpath("td[1]/@onclick").extract()
             popup_link = popup_re.findall(popup_event[0])[0]
             self.url_popup = self.urlprefix + popup_link
@@ -190,7 +189,14 @@ class PjSpider(scrapy.Spider):
             yield scrapy.Request(self.url_postpopup, callback=self.get_popup,
                            method='POST', headers=self.new_headers,
                            body=body,
-                           dont_filter=True)
+                           dont_filter=True,
+                           priority=priority)
+            priority -= 1
+            yield scrapy.Request(self.url_popup, callback=self.popup_parser,
+                              method='GET', headers=self.new_headers,
+                              dont_filter=True,
+                              priority=priority)
+            priority -= 1
         if paginate:
             span_pag = response.xpath("//span[@class='negrita']/text()")[1].extract()
             current, end = pag_re.findall(span_pag)[0]
@@ -203,15 +209,17 @@ class PjSpider(scrapy.Spider):
                 yield scrapy.Request(url_request, callback=self.parse_rows,
                                       method='POST', headers=self.new_headers,
                                       body=body,
-                                      dont_filter=True)
+                                      dont_filter=True,
+                                      priority=priority)
 
     def get_popup(self, response):
         """
         After send popup post, we must proceed to send GET url to parse popup info
         """
-        return scrapy.Request(self.url_popup, callback=self.popup_parser,
-                              method='GET', headers=self.new_headers,
-                              dont_filter=True)
+        pass
+#        return scrapy.Request(self.url_popup, callback=self.popup_parser,
+#                              method='GET', headers=self.new_headers,
+#                              dont_filter=True)
     
     def popup_parser(self, response):
         """
