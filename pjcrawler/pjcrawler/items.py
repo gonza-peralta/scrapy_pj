@@ -7,12 +7,6 @@
 
 import scrapy
 
-
-class PjcrawlerItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
-
 # url = http://bjn.poderjudicial.gub.uy/BJNPUBLICA/busquedaSimple.seam 
 
 class HojaInsumoItem(scrapy.Item):
@@ -25,7 +19,5 @@ class HojaInsumoItem(scrapy.Item):
     fecha = scrapy.Field()
     ficha = scrapy.Field()
     procedimiento = scrapy.Field()
-    redactor_nombre = scrapy.Field()
-    redactor_cargo = scrapy.Field()
     resumen = scrapy.Field()
     sentencia = scrapy.Field()
