@@ -31,8 +31,8 @@ REQUEST_HEADERS = {
 
 FORMDATA = ["AJAXREQUEST=_viewRoot",
             "formBusqueda%3Aj_id18=true",
-            #"formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=1/1/2002",
-            "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=27%2F05%2F2016",
+            "formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=01%2F01%2F2002",
+            #"formBusqueda%3Aj_id20%3Aj_id23%3AfechaDesdeCalInputDate=27%2F05%2F2016",
              
             "formBusqueda%3Aj_id20%3AdecorProcedimiento%3AayudanteProc=",
             "formBusqueda%3Aj_id20%3AdecorProcedimiento%3AsuggestAyudante_selection=",

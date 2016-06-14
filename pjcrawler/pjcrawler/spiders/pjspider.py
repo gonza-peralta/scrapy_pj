@@ -152,15 +152,15 @@ class PjSpider(scrapy.Spider):
         sent = response.xpath('//span[@id="textoSentenciaBox"]')
         sentencia = sent.xpath(".//text()").extract()
         item = HojaInsumoItem()
-        item['numero'] = response.xpath('//td[@id="j_id3:0:j_id13"]/text()').extract()[0]
-        item['sede'] = response.xpath('//td[@id="j_id3:0:j_id15"]/text()').extract()[0]
-        item['importancia'] = response.xpath('//td[@id="j_id3:0:j_id17"]/text()').extract()[0]
-        item['tipo'] = response.xpath('//td[@id="j_id3:0:j_id19"]/text()').extract()[0]
-        item['fecha'] = response.xpath('//td[@id="j_id21:0:j_id29"]/text()').extract()[0]
-        item['ficha'] = response.xpath('//td[@id="j_id21:0:j_id31"]/text()').extract()[0]
-        item['procedimiento'] = response.xpath('//td[@id="j_id21:0:j_id33"]/text()').extract()[0]
-        # item['resumen'] = resumen
-        # item['sentencia'] = sentencia
+        item['numero'] = response.xpath('//td[@id="j_id3:0:j_id13"]/text()').extract()[0].strip()
+        item['sede'] = response.xpath('//td[@id="j_id3:0:j_id15"]/text()').extract()[0].strip()
+        item['importancia'] = response.xpath('//td[@id="j_id3:0:j_id17"]/text()').extract()[0].strip()
+        item['tipo'] = response.xpath('//td[@id="j_id3:0:j_id19"]/text()').extract()[0].strip()
+        item['fecha'] = response.xpath('//td[@id="j_id21:0:j_id29"]/text()').extract()[0].strip()
+        item['ficha'] = response.xpath('//td[@id="j_id21:0:j_id31"]/text()').extract()[0].strip()
+        item['procedimiento'] = response.xpath('//td[@id="j_id21:0:j_id33"]/text()').extract()[0].strip()
+        item['resumen'] = resumen
+        item['sentencia'] = sentencia
         return item
 
         
